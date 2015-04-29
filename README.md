@@ -13,10 +13,11 @@ different extension with server information I want.
 ## Installation
 There will be a more elaborate (and more correct) version in a file
 added later but here is the general process.
+
 1. Install weewx in `/home/weewx`
 2. Install the forecast, mem, S3upload, and reports extensions
 3. Replace the installed `mem.py` with the one in this repo.
-3. Update weewx.conf with the one in this repo, changing any settings
+4. Update weewx.conf with the one in this repo, changing any settings
 required.
-4. Hook up all the server scripts by symlinking from where they should
+5. Hook up all the server scripts by symlinking from where they should
 be to the ones in this repo.

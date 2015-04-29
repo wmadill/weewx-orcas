@@ -1,0 +1,5 @@
+# Automount the VantagePro connected with the Belkin serial-to-USB
+# adapter to port /dev/vpro.
+# Install in /etc/udev/rules.d/70-persistent-vpro.rules
+#
+ACTION=="add", ATTRS{manufacturer}=="Belkin USB PDA Adapter", SYMLINK+="vpro"

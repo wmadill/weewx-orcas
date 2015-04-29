@@ -1,0 +1,15 @@
+/var/weewx/log/weewx.log {
+  weekly
+  missingok
+  rotate 12
+  compress
+  delaycompress
+  notifempty
+# debian uses root:adm
+  create 644 root adm
+  sharedscripts
+  postrotate
+# upstart way of invoking rc scripts
+    service rsyslog restart > /dev/null
+  endscript
+}

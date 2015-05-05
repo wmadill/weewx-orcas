@@ -41,8 +41,8 @@ my $FTP_UPLOADS = 'ftp: files uploaded';
 my $FTP_FAILS = 'ftp: failures';
 my $RSYNC_UPLOADS = 'rsync: files uploaded';
 my $RSYNC_FAILS = 'rsync: failures';
-my $S3_UPLOADS = 'S3sync: files uploaded';
-my $S3_FAILS = 'S3sync: failures';
+my $S3_UPLOADS = 'S3upload: files uploaded';
+my $S3_FAILS = 'S3upload: failures';
 
 # any lines that do not match the patterns we define
 my @unmatched = ();
@@ -140,9 +140,9 @@ while(defined($_ = <STDIN>)) {
         $counts{$RSYNC_UPLOADS} += $1;
     } elsif (/rsyncupload: rsync reported errors/) {
         $counts{$RSYNC_FAILS} += 1;
-    } elsif (/S3sync: sync\'d (\d+) files/) {
+    } elsif (/S3upload: uploaded (\d+) files/) {
         $counts{$S3_UPLOADS} += $1;
-    } elsif (/S3sync: s3sync reported errors/) {
+    } elsif (/S3upload: s3cmd reported errors/) {
         $counts{$S3_FAILS} += 1;
     } elsif (/restful: Unable to publish record/) {
         if (/restful: Unable to publish record \d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d \S\S\S \(\d+\) to (\S+)/) {
@@ -216,7 +216,7 @@ while(defined($_ = <STDIN>)) {
              /reportengine: FTP upload not requested/ ||
              /reportengine: Running report / ||  # only when debug=1
              /reportengine: rsync upload not requested/ ||
-             /reportengine: s3generator/ ||
+             /reportengine: S3uploadGenerator/ ||
              /restful: station will register with/ ||
              /restful: Registration interval/ ||
              /\*\*\*\*  Registration interval/ ||
@@ -468,9 +468,9 @@ while(defined($_ = <STDIN>)) {
              /ftpupload: attempt/ ||
              /ftpupload: Made directory/ ||
              /rsyncupload: rsync executed in/ ||
-             /S3sync: synchronization/ ||
-             /S3sync: synchronizing/ ||
-             /S3sync: End synchronization/ ||
+             /S3upload: upload configured/ ||
+             /S3upload: start upload/ ||
+             /S3upload: end upload/ ||
              /awekas: code/ ||
              /awekas: read/ ||
              /awekas: url/ ||

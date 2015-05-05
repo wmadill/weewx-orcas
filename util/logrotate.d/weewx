@@ -5,11 +5,9 @@
   compress
   delaycompress
   notifempty
-# debian uses root:adm
   create 644 root adm
   sharedscripts
   postrotate
-# upstart way of invoking rc scripts
-    service rsyslog restart > /dev/null
+    /etc/init.d/weewx reload > /dev/null
   endscript
 }

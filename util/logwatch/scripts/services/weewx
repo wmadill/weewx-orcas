@@ -505,7 +505,7 @@ while(defined($_ = <STDIN>)) {
 
 if($clockcount > 0) {
     my $clockskew = $clocksum / $clockcount;
-    print "average station clock skew: $clockskew\n";
+    printf("average station clock skew: %0.2f\n", $clockskew);
     print "  min: $clockmin max: $clockmax samples: $clockcount\n";
     print "\n";
 }

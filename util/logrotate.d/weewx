@@ -1,4 +1,4 @@
-/var/weewx/log/weewx.log {
+/var/log/weewx.log {
   weekly
   missingok
   rotate 12

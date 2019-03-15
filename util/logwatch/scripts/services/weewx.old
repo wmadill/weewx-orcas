@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# $Id: weewx 2813 2014-12-20 14:55:35Z mwall $
 # logwatch script to process weewx log files
 # Copyright 2013 Matthew Wall
 
@@ -14,22 +15,14 @@ my $STARTUPS = 'engine: startups';
 my $HUP_RESTARTS = 'engine: restart from HUP';
 my $KBD_INTERRUPTS = 'engine: keyboard interrupts';
 my $RESTARTS = 'engine: restarts';
-my $GARBAGE = 'engine: Garbage collected';
+my $GARBAGE = 'engine: garbage collected';
 my $ARCHIVE_RECORDS_ADDED = 'archive: records added';
-my $IMAGES_GENERATED = 'imagegenerator: images generated';
+my $IMAGES_GENERATED = 'genimages: images generated';
 my $FILES_GENERATED = 'filegenerator: files generated';
-my $FILES_COPIED = 'copygenerator: files copied';
+my $FILES_COPIED = 'reportengine: files copied';
 my $RECORDS_PUBLISHED = 'restful: records published';
 my $RECORDS_SKIPPED = 'restful: records skipped';
 my $RECORDS_FAILED = 'restful: publish failed';
-my $FORECAST_RECORDS = 'forecast: records generated';
-my $FORECAST_PRUNINGS = 'forecast: prunings';
-my $FORECAST_DOWNLOADS = 'forecast: downloads';
-my $FORECAST_SAVED = 'forecast: records saved';
-my $FTP_UPLOADS = 'ftp: files uploaded';
-my $FTP_FAILS = 'ftp: failures';
-my $RSYNC_UPLOADS = 'rsync: files uploaded';
-my $RSYNC_FAILS = 'rsync: failures';
 my $FOUSB_UNSTABLE_READS = 'fousb: unstable reads';
 my $FOUSB_MAGIC_NUMBERS = 'fousb: unrecognised magic number';
 my $FOUSB_RAIN_COUNTER = 'fousb: rain counter decrement';
@@ -40,13 +33,14 @@ my $FOUSB_MISSED_DATA = 'fousb: missed data';
 my $FOUSB_STATION_SYNC = 'fousb: station sync';
 my $WS23XX_CONNECTION_CHANGE = 'ws23xx: connection change';
 my $WS23XX_INVALID_WIND = 'ws23xx: invalid wind reading';
-my $ACURITE_DODGEY_DATA = 'acurite: R1: ignoring dodgey data';
-my $ACURITE_BAD_R1_LENGTH = 'acurite: R1: bad length';
-my $ACURITE_BAD_R2_LENGTH = 'acurite: R2: bad length';
-my $ACURITE_FAILED_USB_CONNECT = 'acurite: Failed attempt';
-my $ACURITE_STALE_DATA = 'acurite: R1: ignoring stale data';
-my $ACURITE_NO_SENSORS = 'acurite: R1: no sensors found';
-my $ACURITE_BOGUS_STRENGTH = 'acurite: R1: bogus signal strength';
+my $FORECAST_RECORDS = 'forecast: records generated';
+my $FORECAST_PRUNINGS = 'forecast: prunings';
+my $FORECAST_DOWNLOADS = 'forecast: downloads';
+my $FORECAST_SAVED = 'forecast: records saved';
+my $FTP_UPLOADS = 'ftp: files uploaded';
+my $FTP_FAILS = 'ftp: failures';
+my $RSYNC_UPLOADS = 'rsync: files uploaded';
+my $RSYNC_FAILS = 'rsync: failures';
 my $S3_UPLOADS = 'S3upload: files uploaded';
 my $S3_FAILS = 'S3upload: failures';
 
@@ -78,41 +72,25 @@ my %summaries = (
 my @upload_errors = ();
 
 # keep details of ws23xx behavior
-my @ws23xx_conn_change = ();
-my @ws23xx_invalid_wind = ();
+my @conn_change = ();
+my @invalid_wind = ();
 
 # keep details of fine offset behavior
-my @fousb_station_status = ();
-my @fousb_unstable_reads = ();
-my @fousb_magic_numbers = ();
-my @fousb_rain_counter = ();
-my @fousb_suspected_bogus = ();
-
-# keep details of acurite behavior
-my @acurite_dodgey_data = ();
-my @acurite_r1_length = ();
-my @acurite_r2_length = ();
-my @acurite_failed_usb = ();
-my @acurite_stale_data = ();
-my @acurite_no_sensors = ();
-my @acurite_bogus_strength = ();
+my @station_status = ();
+my @unstable_reads = ();
+my @magic_numbers = ();
+my @rain_counter = ();
+my @suspected_bogus = ();
 
 my %itemized = (
     'upload errors', \@upload_errors,
-    'fousb station status', \@fousb_station_status,
-    'fousb unstable reads', \@fousb_unstable_reads,
-    'fousb magic numbers', \@fousb_magic_numbers,
-    'fousb rain counter', \@fousb_rain_counter,
-    'fousb suspected bogus data', \@fousb_suspected_bogus,
-    'ws23xx connection changes', \@ws23xx_conn_change,
-    'ws23xx invalid wind', \@ws23xx_invalid_wind,
-    'acurite dodgey data', \@acurite_dodgey_data,
-    'acurite bad R1 length', \@acurite_r1_length,
-    'acurite bad R2 length', \@acurite_r2_length,
-    'acurite failed usb connect', \@acurite_failed_usb,
-    'acurite stale_data', \@acurite_stale_data,
-    'acurite no sensors', \@acurite_no_sensors,
-    'acurite bogus signal strength', \@acurite_bogus_strength,
+    'fousb station status', \@station_status,
+    'fousb unstable reads', \@unstable_reads,
+    'fousb magic numbers', \@magic_numbers,
+    'fousb rain counter', \@rain_counter,
+    'fousb suspected bogus data', \@suspected_bogus,
+    'ws23xx connection changes', \@conn_change,
+    'ws23xx invalid wind', \@invalid_wind,
     );
 
 my $clocksum = 0;
@@ -130,25 +108,25 @@ while(defined($_ = <STDIN>)) {
         $counts{$KBD_INTERRUPTS} += 1;
     } elsif (/engine: retrying/) {
         $counts{$RESTARTS} += 1;
-    } elsif (/engine: Garbage collected (\d+) objects/) {
+    } elsif (/engine: garbage collected (\d+) objects/) {
         $counts{$GARBAGE} += $1;
     } elsif (/engine: Clock error is ([0-9,.-]+)/) {
         $clocksum += $1;
         $clockmin = $1 if $1 < $clockmin;
         $clockmax = $1 if $1 > $clockmax;
         $clockcount += 1;
-    } elsif (/manager: Added record/ || /archive: added record/) {
+    } elsif (/manager: added record/ || /archive: added record/) {
         $counts{$ARCHIVE_RECORDS_ADDED} += 1;
-    } elsif (/imagegenerator: Generated (\d+) images/) {
+    } elsif (/genimages: Generated (\d+) images/) {
         $counts{$IMAGES_GENERATED} += $1;
-    } elsif (/imagegenerator: aggregate interval required for aggregate type/ ||
-             /imagegenerator: line type \S+ skipped/) {
+    } elsif (/genimages: aggregate interval required for aggregate type/ ||
+             /genimages: line type \S+ skipped/) {
         $errors{$_} = $errors{$_} ? $errors{$_} + 1 : 1;
     } elsif (/cheetahgenerator: Generated (\d+)/ ||
              /cheetahgenerator: generated (\d+)/ ||
              /filegenerator: generated (\d+)/) {
         $counts{$FILES_GENERATED} += $1;
-    } elsif (/copygenerator: copied (\d+) files/) {
+    } elsif (/reportengine: copied (\d+) files/) {
         $counts{$FILES_COPIED} += $1;
     } elsif (/restful: Skipped record/) {
         $counts{$RECORDS_SKIPPED} += 1;
@@ -163,9 +141,9 @@ while(defined($_ = <STDIN>)) {
     } elsif (/rsyncupload: rsync reported errors/) {
         $counts{$RSYNC_FAILS} += 1;
     } elsif (/S3upload: uploaded (\d+) files/) {
-	$counts{$S3_UPLOADS} += $1;
+        $counts{$S3_UPLOADS} += $1;
     } elsif (/S3upload: s3cmd reported errors/) {
-	$counts{$S3_FAILS} += 1;
+        $counts{$S3_FAILS} += 1;
     } elsif (/restful: Unable to publish record/) {
         if (/restful: Unable to publish record \d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d \S\S\S \(\d+\) to (\S+)/) {
             $publish_fails{$1} += 1;
@@ -180,19 +158,19 @@ while(defined($_ = <STDIN>)) {
         $counts{$RECORDS_FAILED} += 1;
         push @upload_errors, $_;
     } elsif (/fousb: station status/) {
-        push @fousb_station_status, $_;
+        push @station_status, $_;
     } elsif (/fousb: unstable read: blocks differ/) {
-        push @fousb_unstable_reads, $_;
+        push @unstable_reads, $_;
         $counts{$FOUSB_UNSTABLE_READS} += 1;
     } elsif (/fousb: unrecognised magic number/) {
-        push @fousb_magic_numbers, $_;
+        push @magic_numbers, $_;
         $counts{$FOUSB_MAGIC_NUMBERS} += 1;
     } elsif (/fousb: rain counter decrement/ ||
              /fousb: ignoring spurious rain counter decrement/) {
-        push @fousb_rain_counter, $_;
+        push @rain_counter, $_;
         $counts{$FOUSB_RAIN_COUNTER} += 1;
     } elsif (/fousb:.*ignoring suspected bogus data/) {
-        push @fousb_suspected_bogus, $_;
+        push @suspected_bogus, $_;
         $counts{$FOUSB_SUSPECTED_BOGUS} += 1;
     } elsif (/fousb: lost log sync/) {
         $counts{$FOUSB_LOST_LOG_SYNC} += 1;
@@ -203,32 +181,11 @@ while(defined($_ = <STDIN>)) {
     } elsif (/fousb: synchronising to the weather station/) {
         $counts{$FOUSB_STATION_SYNC} += 1;
     } elsif (/ws23xx: connection changed from/) {
-        push @ws23xx_conn_change, $_;
+        push @conn_change, $_;
         $counts{$WS23XX_CONNECTION_CHANGE} += 1;
     } elsif (/ws23xx: invalid wind reading/) {
-        push @ws23xx_invalid_wind, $_;
+        push @invalid_wind, $_;
         $counts{$WS23XX_INVALID_WIND} += 1;
-    } elsif (/acurite: R1: ignoring dodgey data/) {
-        push @acurite_dodgey_data, $_;
-        $counts{$ACURITE_DODGEY_DATA} += 1;
-    } elsif (/acurite: R1: bad length/) {
-        push @acurite_r1_length, $_;
-        $counts{$ACURITE_BAD_R1_LENGTH} += 1;
-    } elsif (/acurite: R2: bad length/) {
-        push @acurite_r2_length, $_;
-        $counts{$ACURITE_BAD_R2_LENGTH} += 1;
-    } elsif (/acurite: Failed attempt/) {
-        push @acurite_failed_usb, $_;
-        $counts{$ACURITE_FAILED_USB_CONNECT} += 1;
-    } elsif (/acurite: R1: ignoring stale data/) {
-        push @acurite_stale_data, $_;
-        $counts{$ACURITE_STALE_DATA} += 1;
-    } elsif (/acurite: R1: no sensors found/) {
-        push @acurite_no_sensors, $_;
-        $counts{$ACURITE_NO_SENSORS} += 1;
-    } elsif (/acurite: R1: bogus signal strength/) {
-        push @acurite_bogus_strength, $_;
-        $counts{$ACURITE_BOGUS_STRENGTH} += 1;
     } elsif (/forecast: .*Thread: ([^:]+): generated 1 forecast record/) {
         $forecast_records{$1} += 1;
         $counts{$FORECAST_RECORDS} += 1;
@@ -256,10 +213,10 @@ while(defined($_ = <STDIN>)) {
              /archive: Created and initialized/ ||
              /reportengine: Running reports for latest time/ ||
              /reportengine: Found configuration file/ ||
-             /ftpgenerator: FTP upload not requested/ ||
+             /reportengine: FTP upload not requested/ ||
              /reportengine: Running report / ||  # only when debug=1
-             /rsyncgenerator: rsync upload not requested/ ||
-	     /reportengine: S3uploadGenerator/ ||
+             /reportengine: rsync upload not requested/ ||
+             /reportengine: S3uploadGenerator/ ||
              /restful: station will register with/ ||
              /restful: Registration interval/ ||
              /\*\*\*\*  Registration interval/ ||
@@ -279,7 +236,6 @@ while(defined($_ = <STDIN>)) {
              /engine: Starting main packet loop/ ||
              /engine: Shut down StdReport thread/ ||
              /engine: Shut down StdRESTful thread/ ||
-             /engine: Shutting down StdReport thread/ ||
              /engine: Loading service/ ||
              /engine: Finished loading service/ ||
              /engine: Using archive interval of/ ||
@@ -320,7 +276,6 @@ while(defined($_ = <STDIN>)) {
              /owfss: interface is/ ||
              /owfss: sensor map is/ ||
              /owfss: sensor type map is/ ||
-             /acurite: driver version is/ ||
              /fousb: driver version is/ ||
              /fousb: found station on USB/ ||
              /fousb: altitude is/ ||
@@ -513,9 +468,9 @@ while(defined($_ = <STDIN>)) {
              /ftpupload: attempt/ ||
              /ftpupload: Made directory/ ||
              /rsyncupload: rsync executed in/ ||
-	     /S3upload: upload configured/ ||
-	     /S3upload: start upload/ ||
-	     /S3upload: end upload/ ||
+             /S3upload: upload configured/ ||
+             /S3upload: start upload/ ||
+             /S3upload: end upload/ ||
              /awekas: code/ ||
              /awekas: read/ ||
              /awekas: url/ ||
@@ -539,8 +494,7 @@ while(defined($_ = <STDIN>)) {
              /wbug: code/ ||
              /wbug: read/ ||
              /wbug: url/ ||
-             /wbug: data/ ||
-             /GaugeGenerator:/) {
+             /wbug: data/) {
         # ignore
     } elsif (! /weewx/) {
         # ignore
@@ -551,7 +505,7 @@ while(defined($_ = <STDIN>)) {
 
 if($clockcount > 0) {
     my $clockskew = $clocksum / $clockcount;
-    print "average station clock skew: $clockskew\n";
+    printf("average station clock skew: %0.2f\n", $clockskew);
     print "  min: $clockmin max: $clockmax samples: $clockcount\n";
     print "\n";
 }

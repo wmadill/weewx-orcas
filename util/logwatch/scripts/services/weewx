@@ -47,8 +47,8 @@ my $ACURITE_FAILED_USB_CONNECT = 'acurite: Failed attempt';
 my $ACURITE_STALE_DATA = 'acurite: R1: ignoring stale data';
 my $ACURITE_NO_SENSORS = 'acurite: R1: no sensors found';
 my $ACURITE_BOGUS_STRENGTH = 'acurite: R1: bogus signal strength';
-my $S3_UPLOADS = 'S3upload: files uploaded';
-my $S3_FAILS = 'S3upload: failures';
+my $S3_UPLOADS = 's3uploadgenerator: files uploaded';
+my $S3_FAILS = 's3uploadgenerator: failures';
 
 # any lines that do not match the patterns we define
 my @unmatched = ();
@@ -162,9 +162,9 @@ while(defined($_ = <STDIN>)) {
         $counts{$RSYNC_UPLOADS} += $1;
     } elsif (/rsyncupload: rsync reported errors/) {
         $counts{$RSYNC_FAILS} += 1;
-    } elsif (/S3upload: uploaded (\d+) files/) {
+    } elsif (/s3uploadgenerator: results: uploaded (\d+) files/) {
 	$counts{$S3_UPLOADS} += $1;
-    } elsif (/S3upload: s3cmd reported errors/) {
+    } elsif (/s3uploadgenerator: s3cmd reported errors/) {
 	$counts{$S3_FAILS} += 1;
     } elsif (/restful: Unable to publish record/) {
         if (/restful: Unable to publish record \d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d \S\S\S \(\d+\) to (\S+)/) {
@@ -259,7 +259,16 @@ while(defined($_ = <STDIN>)) {
              /ftpgenerator: FTP upload not requested/ ||
              /reportengine: Running report / ||  # only when debug=1
              /rsyncgenerator: rsync upload not requested/ ||
-	     /reportengine: S3uploadGenerator/ ||
+	     /s3uploadgenerator: start S3uploadGenerator/ ||
+	     /s3uploadgenerator: upload configured/ ||
+	     /s3uploadgenerator: no upload configured/ ||
+	     /s3uploadgenerator: uploading/ ||
+	     /s3uploadgenerator: return from upload thread/ ||
+	     /s3uploadgenerator: start upload at/ ||
+	     /s3uploadgenerator: command:/ ||
+	     /s3uploadgenerator: s3cmd does not appear to be installed/ ||
+	     /s3uploadgenerator: s3cmd output:/ ||
+	     /s3uploadgenerator: end upload at/ ||
              /restful: station will register with/ ||
              /restful: Registration interval/ ||
              /\*\*\*\*  Registration interval/ ||
@@ -513,9 +522,6 @@ while(defined($_ = <STDIN>)) {
              /ftpupload: attempt/ ||
              /ftpupload: Made directory/ ||
              /rsyncupload: rsync executed in/ ||
-	     /S3upload: upload configured/ ||
-	     /S3upload: start upload/ ||
-	     /S3upload: end upload/ ||
              /awekas: code/ ||
              /awekas: read/ ||
              /awekas: url/ ||

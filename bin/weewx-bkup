@@ -1,0 +1,8 @@
+#!/bin/bash
+# build a tarball of all the weewx databases and upload to an S3 bucket
+
+# the tarball ...
+tar czf /home/bill/weewx-dbs/databases_`date '+%Y-%m-%d_%H%M'`.tar.gz /home/weewx/archive/*.sdb
+
+# and the upload
+/usr/local/bin/s3cmd sync /home/bill/weewx-dbs s3://orcas-weather.jamimi.com

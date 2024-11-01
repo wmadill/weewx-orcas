@@ -1,11 +1,14 @@
 #!/bin/bash
-# Backup all database files and rotate the backups. Upload the backups 
-# to an S3 bucket.
+#
+# Run from crontab every night
+# /home/weewx/bin/weewx-bkup >>/home/weewx/bkup-logs/log 2>&1 
+#
+# Backup all database files and upload to an S3 buckee. 
 #
 # This can be run manually but is intended to run as cronjob shortly
 # after the databases are updated.
 #
-BUCKETNAME=xxx
+BUCKETNAME=backups.wmadill.com
 BKUPDIR=/home/weewx/weewx-dbs/
 DBSDIR=/home/weewx/weewx-data/archive/
 TARNAME=databases_`date '+%Y-%m-%d_%H%M'`.tar.gz
@@ -26,6 +29,9 @@ SAVMNLY=1
 DOW=`date '+%w'`
 DOM=`date '+%-d'`
 
+echo
+echo 'WeeWX database backup at ' `date`
+
 #echo $BUCKETNAME
 #echo 'BKUPDIR: ' $BKUPDIR
 #echo 'DBSDIR: ' $DBSDIR
@@ -41,6 +47,7 @@ DOM=`date '+%-d'`
 
 cd $DBSDIR
 # the tarball ...
+echo 'Creating backup' $TARNAME
 tar czf $FULLPATHTAR *.sdb
 
 cd $BKUPDIR
@@ -50,7 +57,7 @@ mkdir -p monthly
 # If weekly save day, copy tarball to "weekly" directory ...
 if [ "$DOW" -eq "$SAVWKLY" ]
 then
-  echo 'Save daily to monthly'
+  echo 'Save daily to weekly'
   cp $TARNAME weekly
 
   # Check if more dailies than maximum desired ...
@@ -65,7 +72,11 @@ then
     echo 'Deleting these dailies:'
     ls -1r databases* | tail -n $DELDAILY
     ls -1r databases* | tail -n $DELDAILY | xargs rm
+  else
+    echo 'No dailies to delete'
   fi
+else
+  echo 'Not weekly save day'
 fi
 
 # If monthly save day, copy tarball to "monthly" directory ...
@@ -87,6 +98,8 @@ then
     echo 'Deleting these weeklies:'
     ls -1r databases* | tail -n $DELWKLY
     ls -1r databases* | tail -n $DELWKLY | xargs rm
+  else
+    echo 'No weeklies to delete'
   fi
 
   # Check if more monthlies than maximum desired ...
@@ -102,8 +115,13 @@ then
     echo 'Deleting these monthlies'
     ls -1r databases* | tail -n $DELMNLY 
     ls -1r databases* | tail -n $DELMNLY | xargs rm
+  else
+    echo 'No monthlies to delete'
   fi
+else
+  echo 'Not monthly save day'
 fi
 
 # and finally the upload!
-#/home/weewx/weewx-venv/bin/s3cmd --config=/home/weewx/.s3cfg --delete-removed sync /home/weewx/weewx-dbs/ s3://$BUCKETNAME/test-dbs/
+echo 's3cmd output'
+/home/weewx/weewx-venv/bin/s3cmd --config=/home/weewx/.s3cfg sync -r --delete-removed --skip-existing /home/weewx/weewx-dbs/ s3://$BUCKETNAME/test-dbs/

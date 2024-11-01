@@ -1,8 +1,109 @@
 #!/bin/bash
-# build a tarball of all the weewx databases and upload to an S3 bucket
+# Backup all database files and rotate the backups. Upload the backups 
+# to an S3 bucket.
+#
+# This can be run manually but is intended to run as cronjob shortly
+# after the databases are updated.
+#
+BUCKETNAME=xxx
+BKUPDIR=/home/weewx/weewx-dbs/
+DBSDIR=/home/weewx/weewx-data/archive/
+TARNAME=databases_`date '+%Y-%m-%d_%H%M'`.tar.gz
+FULLPATHTAR=$BKUPDIR$TARNAME 
 
+# Maximum number of daily backups to keep
+MAXDLY=100
+# Maximum number of weekly backups to keep
+MAXWKLY=30
+# Maximum number of monthly backups to keep
+MAXMNLY=24
+
+# Save daily backup also in "weekly" on Saturday
+SAVWKLY=6
+# Save daily backup also in "monthly" on first day of month
+SAVMNLY=1
+
+DOW=`date '+%w'`
+DOM=`date '+%-d'`
+
+#echo $BUCKETNAME
+#echo 'BKUPDIR: ' $BKUPDIR
+#echo 'DBSDIR: ' $DBSDIR
+#echo 'TARNAME: ' $TARNAME
+#echo 'MAXDLY: ' $MAXDLY
+#echo 'MAXWKLY: ' $MAXWKLY
+#echo 'MAXMNLY: ' $MAXMNLY
+#echo 'Full path tar name: ' $BKUPDIR$TARNAME
+#echo 'SAVWKLY: ' $SAVWKLY
+#echo 'DOW:' $DOW
+#echo 'SAVMNLY: ' $SAVMNLY
+#echo 'DOM:' $DOM
+
+cd $DBSDIR
 # the tarball ...
-tar czf /home/bill/weewx-dbs/databases_`date '+%Y-%m-%d_%H%M'`.tar.gz /home/weewx/archive/*.sdb
+tar czf $FULLPATHTAR *.sdb
 
-# and the upload
-/usr/local/bin/s3cmd sync /home/bill/weewx-dbs s3://orcas-weather.jamimi.com
+cd $BKUPDIR
+mkdir -p weekly
+mkdir -p monthly
+
+# If weekly save day, copy tarball to "weekly" directory ...
+if [ "$DOW" -eq "$SAVWKLY" ]
+then
+  echo 'Save daily to monthly'
+  cp $TARNAME weekly
+
+  # Check if more dailies than maximum desired ...
+  CNTDAILY=`ls databases* -1 | wc -l`
+  #echo 'CNTDAILY: ' $CNTDAILY
+  DELDAILY=$((CNTDAILY-MAXDLY))
+  echo 'DELDAILY: ' $DELDAILY
+  
+  # and delete oldest ones
+  if [ "$DELDAILY" -gt 0 ]
+  then
+    echo 'Deleting these dailies:'
+    ls -1r databases* | tail -n $DELDAILY
+    ls -1r databases* | tail -n $DELDAILY | xargs rm
+  fi
+fi
+
+# If monthly save day, copy tarball to "monthly" directory ...
+if [ "$DOM" -eq "$SAVMNLY" ]
+then
+  echo 'Save daily to monthly'
+  cp $TARNAME monthly
+
+  # Check if more weeklies than maximum desired ...
+  cd weekly
+  CNTWKLY=`ls databases* -1 | wc -l`
+  #echo 'CNTWKLY: ' $CNTWKLY
+  DELWKLY=$((CNTWKLY-MAXWKLY))
+  echo 'DELWKLY: ' $DELWKLY
+  
+  # and delete oldest ones
+  if [ "$DELWKLY" -gt 0 ]
+  then
+    echo 'Deleting these weeklies:'
+    ls -1r databases* | tail -n $DELWKLY
+    ls -1r databases* | tail -n $DELWKLY | xargs rm
+  fi
+
+  # Check if more monthlies than maximum desired ...
+  cd ../monthly
+  CNTMNLY=`ls databases* -1 | wc -l`
+  #echo 'CNTMNLY: ' $CNTMNLY
+  DELMNLY=$((CNTMNLY-MAXMNLY))
+  echo 'DELMNLY: ' $DELMNLY
+  
+  # and delete oldest ones
+  if [ "$DELMNLY" -gt 0 ]
+  then
+    echo 'Deleting these monthlies'
+    ls -1r databases* | tail -n $DELMNLY 
+    ls -1r databases* | tail -n $DELMNLY | xargs rm
+  fi
+fi
+
+# and finally the upload!
+#/home/weewx/weewx-venv/bin/s3cmd --config=/home/weewx/.s3cfg --delete-removed sync /home/weewx/weewx-dbs/ s3://$BUCKETNAME/test-dbs/

@@ -1,0 +1,9 @@
+/home/weewx/weewx-bkup/bkup.log {
+  weekly
+  missingok
+  rotate 12
+  compress
+  delaycompress
+  notifempty
+  sharedscripts
+}

@@ -7,13 +7,13 @@
 #
 # S3 bucket with offsite backup
 BUCKETNAME=backups.wmadill.com
-# Backups location
-BKUPDIR=/home/weewx/weewx-bkup/archive
+# Backups location -- note trailing slash!
+BKUPDIR=/home/weewx/weewx-bkup/archive/
 # Database(s) location
 DBSDIR=/home/weewx/weewx-data/archive/
 # Backup name
 TARNAME=databases_`date '+%Y-%m-%d_%H%M'`.tar.gz
-FULLPATHTAR=$BKUPDIR/$TARNAME 
+FULLPATHTAR=$BKUPDIR$TARNAME 
 
 # Day of week (0 = Sunday)
 DOW=`date '+%w'`
@@ -41,7 +41,7 @@ echo 'WeeWX database backup at ' `date`
 #echo 'MAXDLY: ' $MAXDLY
 #echo 'MAXWKLY: ' $MAXWKLY
 #echo 'MAXMNLY: ' $MAXMNLY
-#echo 'Full path tar name: ' $BKUPDIR$TARNAME
+#echo 'Full path tar name: ' $FULLPATHTAR
 #echo 'SAVWKLY: ' $SAVWKLY
 #echo 'DOW:' $DOW
 #echo 'SAVMNLY: ' $SAVMNLY

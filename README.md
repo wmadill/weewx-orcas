@@ -2,22 +2,26 @@
 This repo has the various changes made to a stock weewx installation
 for my Orcas configuration.
 
-## File layout
-Files are laid out the same way that weewx has them. Any directory
-with a file supercedes the corresponding file in the stock
-configuraiton. In most cases these are updated versions of the 
-server configuration files such as for `/etc/logwatch`. There is a
-modified `mem` extension which I will eventually replace with a
-different extension with server information I want.
+## Repo Contents
+- `weewx.conf` - production version after installing extensions; check
+  carefully before overwriting the running weewx.conf and merge
+  any changes.
+- `weewx.conf-test` - initial installation version before any extensions
+  installed.
+- ~weewx-bkup` - directory of database backup files.
+  - `bin` - contains install script and backup script.
+  - `util` - logrotate configuration to rotate backup logs.
+- `pre-weewx-5` - directory of contents before upgrade to weewx 5. Will 
+  be deleted at some point because it is likely not useful,
+- CHANGELOG.md, README.md - the usual...
 
 ## Installation
-There will be a more elaborate (and more correct) version in a file
+There will be a more detailed version in a file
 added later but here is the general process.
 
-1. Install weewx in `/home/weewx`
-2. Install the forecast, mem, S3upload, and reports extensions
-3. Replace the installed `mem.py` with the one in this repo.
-4. Update weewx.conf with the one in this repo, changing any settings
-required.
-5. Hook up all the server scripts by symlinking from where they should
-be to the ones in this repo.
+1. Install `weewx` in `/home/weewx` using `pip` and test it.
+2. Install the forecast, S3upload, and orcas-skin extensions.
+3. Update `weewx.conf` with the one in this repo, changing any settings
+   required. Test.
+4. Copy `weewx-bkup` to `/home/weewx/weewk-bkup`, run `bin/install.sh`, and
+   copy `util/logrotate.d/weewx-bkup` to `/etc/logrotate.d`.

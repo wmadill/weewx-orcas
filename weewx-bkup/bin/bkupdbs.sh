@@ -124,4 +124,4 @@ fi
 
 # and finally the upload!
 echo 's3cmd output'
-/home/weewx/weewx-venv/bin/s3cmd --config=/home/weewx/.s3cfg sync -r --delete-removed --skip-existing $BKUPDIR s3://$BUCKETNAME/test-dbs/
+/home/weewx/weewx-venv/bin/s3cmd --config=/home/weewx/.s3cfg sync --delete-removed --skip-existing $BKUPDIR s3://$BUCKETNAME/test-dbs/

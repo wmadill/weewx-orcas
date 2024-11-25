@@ -1,5 +1,5 @@
-/home/weewx/weewx-bkup/bkup.log {
-  weekly
+/home/weewx/weewx-bkup/log/bkup.log {
+  monthly
   missingok
   rotate 12
   compress

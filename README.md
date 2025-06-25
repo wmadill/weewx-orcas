@@ -8,7 +8,7 @@ for my Orcas configuration.
   any changes.
 - `weewx.conf-test` - initial installation version before any extensions
   installed.
-- ~weewx-bkup` - directory of database backup files.
+- `~weewx-bkup` - directory of database backup files.
   - `bin` - contains install script and backup script.
   - `util` - logrotate configuration to rotate backup logs.
 - `pre-weewx-5` - directory of contents before upgrade to weewx 5. Will 

@@ -21,10 +21,10 @@ added later but here is the general process.
 
 1. Install `weewx` in `/home/weewx` using `pip` and test it.
 2. Install these extensions (github repos):
-   2.1 forecast (chaunceygardiner/weewx-forecast.git)
-   2.2 S3uploadr (wmadill/weewx-S3upload.git)
-   2.3 orcas-skin (wmadill/weewx-orcas-skin.git)
-   2.4 sysinfo (wmadill/weewx-sysinfo.git)
+   2 forecast (chaunceygardiner/weewx-forecast.git)
+   2 S3uploadr (wmadill/weewx-S3upload.git)
+   2 orcas-skin (wmadill/weewx-orcas-skin.git)
+   2 sysinfo (wmadill/weewx-sysinfo.git)
 3. Update `weewx.conf` with the one in this repo, changing any settings
    required. Test.
 4. Copy `weewx-bkup` to `/home/weewx/weewk-bkup`, run `bin/install.sh`, and

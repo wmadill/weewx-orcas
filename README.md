@@ -1,5 +1,5 @@
 # weewx-orcas
-This repo has the various changes made to a stock weewx installation
+This repo has the various changes made to a stock WeeWX installation
 for my Orcas configuration.
 
 ## Repo Contents
